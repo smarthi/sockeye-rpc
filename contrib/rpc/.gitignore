@@ -1,0 +1,2 @@
+# Ignore thrift generated Python code.
+translate_service/
