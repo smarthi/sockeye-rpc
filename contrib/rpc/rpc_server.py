@@ -29,7 +29,7 @@ from torthrift.transport import TIOStreamTransportFactory
 from contrib.rpc.translate_service.Translate import Processor
 from sockeye import inference, arguments
 from sockeye.log import setup_main_logger
-from utils import check_condition, get_num_gpus, acquire_gpus
+from sockeye.utils import check_condition, get_num_gpus, acquire_gpus
 
 logger = setup_main_logger(__name__, file_logging=False)
 
