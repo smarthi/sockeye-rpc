@@ -16,6 +16,13 @@ thrift -gen py -out contrib/rpc   contrib/rpc/thrift/translate_service.thrift
 You should now have a folder in your contrib/rpc directory named 'translate_service'.  This folder contains all the
 generated code required to start a rpc thrift translation service.
 
+## Setting your PYTHONPATH
+Before starting the server you may need to set your pythonpath to properly load sockeye contrib packages.
+From the source root dir run:
+```bash
+export PYTHONPATH=`pwd`:$PYTHONPATH
+```
+
 ## Starting the server
 You can now start service requests.  Just start start rpc_server.py with the same command line arguments you would use
 to run translate.py.  For example:
