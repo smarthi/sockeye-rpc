@@ -27,7 +27,7 @@ export PYTHONPATH=`pwd`:$PYTHONPATH
 You can now start service requests.  Just start start rpc_server.py with the same command line arguments you would use
 to run translate.py.  For example:
 ```bash
-python contrib/rpc/rpc_server.py --use-cpu  -m model_folder
+python contrib/rpc/rpc_server.py --use-cpu  -m model_folder --bpe-codes codes_file --bpe-vocabulary vocab_file
 ```
 
 ## Testing the server
