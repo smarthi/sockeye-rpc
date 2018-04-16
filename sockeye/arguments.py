@@ -940,6 +940,21 @@ def add_translate_cli_args(params):
     add_logging_args(params)
 
 
+def add_bpe_args(params):
+    bpe_params = params.add_argument_group("BPE parameters")
+    bpe_params.add_argument('--bpe-codes', '-bpec', metavar='PATH',
+                            required=True, type=argparse.FileType('r'),
+                            help='Path to BPE codes file.')
+    bpe_params.add_argument('--bpe-vocabulary', '-bpev', metavar='PATH',
+                            required=True, type=argparse.FileType('r'),
+                            help='Path to BPE vocabulary file.')
+    bpe_params.add_argument('--bpe-vocabulary-threshold', '-bpet',
+                            required=False,
+                            default=50,
+                            help='Vocabulary threshold to use.  Default: %(default)s.')
+
+
+
 def add_inference_args(params):
     decode_params = params.add_argument_group("Inference parameters")
 

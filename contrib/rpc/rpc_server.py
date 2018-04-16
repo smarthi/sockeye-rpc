@@ -16,16 +16,20 @@ Basic RPC server utilizing a single process and thread to serve translations fro
 """
 
 import argparse
+import codecs
 import threading
 from contextlib import ExitStack
 
+import io
 import mxnet as mx
+import sys
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolFactory
 from tornado import gen
 from tornado.ioloop import IOLoop
 from torthrift.server import TTornadoServer
 from torthrift.transport import TIOStreamTransportFactory
 
+from contrib.rpc.bpe import BPE, read_vocabulary
 from contrib.rpc.translate_service.Translate import Processor
 from sockeye import inference, arguments
 from sockeye.log import setup_main_logger
@@ -36,13 +40,15 @@ logger = setup_main_logger(__name__, file_logging=False)
 
 class Handler(object):
 
-    def __init__(self, translator):
+    def __init__(self, translator, bpe):
         self.translator = translator
         self.request_counter = 0
+        self.bpe = bpe
 
     @gen.coroutine
     def translate(self, source):
-        inputs = [inference.make_input_from_plain_string(self.request_counter, source)]
+        source_with_bpe = self.bpe.segment(source)
+        inputs = [inference.make_input_from_plain_string(self.request_counter, source_with_bpe)]
         translations = self.translator.translate(inputs)
         print('translate called')
         print('Thread: ' + str(threading.current_thread()))
@@ -66,11 +72,12 @@ class Handler(object):
 
 class SockeyeRpcServer(object):
 
-    def __init__(self, translator):
+    def __init__(self, translator, bpe):
         self.translator = translator
+        self.bpe = bpe
 
     def serve(self):
-        handler = Handler(self.translator)
+        handler = Handler(self.translator, self.bpe)
         processor = Processor(handler)
         tfactory = TIOStreamTransportFactory()
         protocol = TBinaryProtocolFactory()
@@ -84,6 +91,7 @@ class SockeyeRpcServer(object):
 def main():
     params = argparse.ArgumentParser(description='Translate CLI')
     arguments.add_translate_cli_args(params)
+    arguments.add_bpe_args(params)
     args = params.parse_args()
 
     with ExitStack() as exit_stack:
@@ -131,7 +139,20 @@ def main():
                                           store_beam=False,
                                           strip_unknown_words=args.strip_unknown_words)
 
-        rpc_server = SockeyeRpcServer(translator)
+        logger.info('Parsing vocabulary')
+        sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', write_through=True, line_buffering=True)
+
+        opened_vocab = codecs.open(args.bpe_vocabulary.name, encoding='utf-8')
+        bpe_filtered_vocab = read_vocabulary(opened_vocab, args.bpe_vocabulary_threshold)
+        bpe_merges = -1  # Apply all merge operations.
+        bpe_separator = '@@'  # Use default BPE separator.
+        bpe_glossaries = None # No excluded words.
+        bpe = BPE(args.bpe_codes, bpe_merges, bpe_separator, bpe_filtered_vocab, bpe_glossaries)
+
+        logger.info('Starting RPC server.')
+        rpc_server = SockeyeRpcServer(translator, bpe)
         rpc_server.serve()
 
 
