@@ -33,7 +33,10 @@ def test():
         transport = TStreamPool('127.0.0.1', 9095, max_stream=10)
         client = PoolClient(Client, transport, TBinaryProtocolFactory())
         for i in range(0, 20):
-            res = yield client.translate('Die USA und Großbritannien berichten von einer mutmaßlichen weltweiten Cyberattacke. Von der Regierung in Moskau unterstützte Hacker-Gruppen hätten Router, Switches und Firewalls infiziert, so Behörden beider Länder.')
+            res = yield client.translate('Die USA und Großbritannien berichten von einer mutmaßlichen weltweiten Cyberattacke.')
+            res = res.replace('@@ ', '')
+            print(res)
+            res = yield client.translate('Von der Regierung in Moskau unterstützte Hacker-Gruppen hätten Router, Switches und Firewalls infiziert, so Behörden beider Länder.')
             res = res.replace('@@ ', '')
             print(res)
     except Thrift.TException as ex:
