@@ -83,7 +83,7 @@ class SockeyeRpcServer(object):
         protocol = TBinaryProtocolFactory()
 
         server = TTornadoServer(processor, tfactory, protocol)
-        server.bind(20000)
+        server.bind(9095)
         server.start(1)  # MXNet requires we use a single thread, single process.
         IOLoop.instance().start()
 
